@@ -74,6 +74,10 @@ function getFilmRecommendations(req, res, next) {
     where: {
       genre_id: {
              $in: sequelize.literal('(' + findByGenreId + ')'),
+      },
+      release_date: {
+        $gte: sequelize.literal(`date((SELECT release_date FROM films WHERE id = ${id}), '-15 years')`),
+        $lte: sequelize.literal(`date((SELECT release_date FROM films WHERE id = ${id}), '+15 years')`),
       }
     },
     offset: 0,
