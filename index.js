@@ -16,7 +16,46 @@ app.get('/films/:id/recommendations', getFilmRecommendations);
 
 // ROUTE HANDLER
 function getFilmRecommendations(req, res) {
-  res.status(500).send('Not Implemented');
+//  res.status(500).send('Not Implemented');
+
+const sequelize = new Sequelize('null', 'null', 'null', {
+  dialect: 'sqlite',
+  storage: 'db/database.db',
+  define: {
+    timestamps: false
+  }
+});
+
+//MODELS
+const genres = sequelize.define('genres', {
+  id: { allowNull: false, primaryKey: true, unique: true, type: Sequelize.INTEGER },
+  name: { allowNull: false, type: Sequelize.STRING }
+});
+
+const films = sequelize.define('films', {
+  id: { allowNull: false, primaryKey: true, unique: true, type: Sequelize.INTEGER },
+  title: { allowNull: false, type: Sequelize.STRING },
+  release_date: { allowNull: false, type: Sequelize.DATE },
+  tagline: { allowNull: false, type: Sequelize.STRING },
+  revenue: { allowNull: false, defaultValue: 0, type: Sequelize.BIGINT },
+  budget: { allowNull: false, type: Sequelize.BIGINT },
+  runtime: { allowNull: false, type: Sequelize.INTEGER },
+  original_language: { allowNull: false, type: Sequelize.STRING },
+  status: { allowNull: false, type: Sequelize.STRING },
+  genre_id: { allowNull: false, type: Sequelize.INTEGER }
+});
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 module.exports = app;
