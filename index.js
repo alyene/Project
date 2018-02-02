@@ -12,7 +12,7 @@ Promise.resolve()
   .catch((err) => { if (NODE_ENV === 'development') console.error(err.stack); });
 
 // ROUTES
-app.get('/films/:id', getFilmRecommendations);
+app.get('/films/:id/recommendations', getFilmRecommendations);
 
 // ROUTE HANDLER
 function getFilmRecommendations(req, res, next) {
@@ -55,7 +55,9 @@ function getFilmRecommendations(req, res, next) {
   });
 
   let id = req.params.id,
-      recommendations = [];
+      recommendations = [],
+      offset = 0,
+      limit = 10;
 
   const findByGenreId = sequelize.dialect.QueryGenerator.selectQuery('films',{
     attributes: ['genre_id'],
@@ -74,36 +76,22 @@ function getFilmRecommendations(req, res, next) {
     ],
     where: {
       genre_id: {
-             $in: sequelize.literal('(' + findByGenreId + ')'),
+        $in: sequelize.literal('(' + findByGenreId + ')'),
       },
       release_date: {
         $gte: sequelize.literal(`date((SELECT release_date FROM films WHERE id = ${id}), '-15 years')`),
         $lte: sequelize.literal(`date((SELECT release_date FROM films WHERE id = ${id}), '+15 years')`),
       }
-    },
-    offset: 0,
-    limit: 10
-    })
-      .then(films => {
-        const resObj = films.map(film => {
-        return Object.assign(
-          {},
-          {
-            film_id: film.id,
-            title: film.title,
-            release_date: film.release_date,
-            genre: film.genre.name,
-        })
-    });
-      res.json(resObj)
-  }).catch(next);
-
-  function getReviews(filmsData) {
-
-    filmsData.map(film => {
-      //console.log(film);
+    }
+    // ,
+    // offset: 0,
+    // limit: 10
+    }).then(films => {
+      let count = 0;
+      films.map(film => {
+      console.log(film);
       request(`http://credentials-api.generalassemb.ly/4576f55f-c427-4cfc-a11c-5bfe914ca6c1?films=${film.id}`, function (error, response, body) {
-
+        count++;
         if (!error && response.statusCode == 200) {
           let data = JSON.parse(body);
           let rev = data[0].reviews;
@@ -124,29 +112,24 @@ function getFilmRecommendations(req, res, next) {
                     reviews: rev.length,
                   };
                   recommendations.push(film);
-                  //console.log(recommendations);
+                  console.log(recommendations);
                 }
               }
           }
-        }
+          if (films.length === count) {
+            let resObj = Object.assign(
+              {},
+              {
+              recommendations: recommendations.splice(offset, limit),
+              meta: { limit, offset }
+            })
+            res.json(resObj)
+          }
+        };
       });
     });
-  };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
+  });
+};
 
 app.use(function(req, res, next) {
   res.status(404).json({ message: 'Oops, not found' });
