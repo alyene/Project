@@ -59,11 +59,11 @@ function getFilmRecommendations(req, res, next) {
       offset = 0,
       limit = 10;
 
-  // INVALID IDs
+  // INVALID IDs ERROR HANDLING
   if (isNaN(id) || id === undefined) {
     return res.status(422).json({ message: 'key missing' });
   }
-  // INVALID QUERY
+  // INVALID QUERY ERROR HANDLING
   if (isNaN(parseInt(req.query.offset)) && isNaN(parseInt(req.query.limit))) {
     if (
       !req.originalUrl.endsWith('recommendations') &&
@@ -73,6 +73,7 @@ function getFilmRecommendations(req, res, next) {
     }
   }
 
+  //SUBQUERY
   const findByGenreId = sequelize.dialect.QueryGenerator.selectQuery('films',{
     attributes: ['genre_id'],
     where: {
@@ -81,6 +82,7 @@ function getFilmRecommendations(req, res, next) {
     })
     .slice(0,-1);
 
+  //FIND ALL FILMS WHERE GENRE_ID AND RELEASE_DATES RANGE +/-15 YEARS AS ON SPECIFIC FILM.ID
   films.findAll({
     include: [
       {
@@ -97,6 +99,7 @@ function getFilmRecommendations(req, res, next) {
         $lte: sequelize.literal(`date((SELECT release_date FROM films WHERE id = ${id}), '+15 years')`),
       }
     }
+   //GET REVIEWS AND RATINGS FOR THE FILMS, AND FILTER THE ONES WITH REVIEWS NUMBER MORE THAN 5 AND AVERAGE RATING HIGHER THAN 4
     }).then(films => {
       let count = 0;
       films.map(film => {
