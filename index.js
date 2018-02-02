@@ -12,10 +12,10 @@ Promise.resolve()
   .catch((err) => { if (NODE_ENV === 'development') console.error(err.stack); });
 
 // ROUTES
-app.get('/films/:id/recommendations', getFilmRecommendations);
+app.get('/films', getFilmRecommendations);
 
 // ROUTE HANDLER
-function getFilmRecommendations(req, res) {
+function getFilmRecommendations(req, res, next) {
 //  res.status(500).send('Not Implemented');
 
   const sequelize = new Sequelize('null', 'null', 'null', {
@@ -50,10 +50,36 @@ function getFilmRecommendations(req, res) {
     foreignKey: 'genre_id'
   });
 
-  films.belongTo(genres, {
+  films.belongsTo(genres, {
     foreignKey: 'genre_id'
   });
 
+  //FETCH ALL
+  //app.get('/films', (req, res, next) => {
+  films.findAll({
+    include: [
+      {
+        model: genres,
+        required: true
+      }
+    ],
+    offset: 1,
+    limit: 10
+    })
+      .then(films => {
+        const resObj = films.map(film => {
+        return Object.assign(
+          {},
+          {
+            film_id: film.id,
+            title: film.title,
+            release_date: film.release_date,
+            genre: film.genre.name,
+        })
+    });
+      res.json(resObj)
+  })
+    .catch(next)
 
 
 
@@ -70,5 +96,11 @@ function getFilmRecommendations(req, res) {
 
 
 }
+
+app.use(function(req, res, next) {
+  res.status(404).json({ message: 'Oops, not found' });
+  console.log(res.statusCoe);
+});
+
 
 module.exports = app;
