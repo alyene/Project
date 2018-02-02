@@ -45,6 +45,17 @@ const films = sequelize.define('films', {
   genre_id: { allowNull: false, type: Sequelize.INTEGER }
 });
 
+//RELATIONS
+genres.hasOne(films, {
+  foreignKey: 'genre_id'
+});
+
+films.belongTo(genres, {
+  foreignKey: 'genre_id'
+});
+
+
+
 
 
 
