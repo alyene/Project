@@ -54,7 +54,8 @@ function getFilmRecommendations(req, res, next) {
     foreignKey: 'genre_id'
   });
 
-  let id = req.params.id;
+  let id = req.params.id,
+      recommendations = [];
 
   const findByGenreId = sequelize.dialect.QueryGenerator.selectQuery('films',{
     attributes: ['genre_id'],
@@ -95,9 +96,42 @@ function getFilmRecommendations(req, res, next) {
         })
     });
       res.json(resObj)
-  })
-    .catch(next);
+  }).catch(next);
 
+  function getReviews(filmsData) {
+
+    filmsData.map(film => {
+      //console.log(film);
+      request(`http://credentials-api.generalassemb.ly/4576f55f-c427-4cfc-a11c-5bfe914ca6c1?films=${film.id}`, function (error, response, body) {
+
+        if (!error && response.statusCode == 200) {
+          let data = JSON.parse(body);
+          let rev = data[0].reviews;
+          let result = 0;
+          if (rev.length >= 5){
+            rev.map((review) => {
+              result += review.rating;
+            })
+              let averageRating = (result/rev.length).toFixed(2);
+              if( averageRating > 4){
+                if(data[0].film_id === film.id) {
+                  film = {
+                    id: film.id,
+                    title: film.title,
+                    releaseDate: film.release_date,
+                    genre: film.genre.name,
+                    averageRating: averageRating,
+                    reviews: rev.length,
+                  };
+                  recommendations.push(film);
+                  //console.log(recommendations);
+                }
+              }
+          }
+        }
+      });
+    });
+  };
 
 
 
