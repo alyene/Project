@@ -59,6 +59,20 @@ function getFilmRecommendations(req, res, next) {
       offset = 0,
       limit = 10;
 
+  // INVALID IDs
+  if (isNaN(id) || id === undefined) {
+    return res.status(422).json({ message: 'key missing' });
+  }
+  // INVALID QUERY
+  if (isNaN(parseInt(req.query.offset)) && isNaN(parseInt(req.query.limit))) {
+    if (
+      !req.originalUrl.endsWith('recommendations') &&
+      !req.originalUrl.endsWith('recommendations/')
+    ) {
+      return res.status(422).json({ message: 'key missing' });
+    }
+  }
+
   const findByGenreId = sequelize.dialect.QueryGenerator.selectQuery('films',{
     attributes: ['genre_id'],
     where: {
@@ -83,9 +97,6 @@ function getFilmRecommendations(req, res, next) {
         $lte: sequelize.literal(`date((SELECT release_date FROM films WHERE id = ${id}), '+15 years')`),
       }
     }
-    // ,
-    // offset: 0,
-    // limit: 10
     }).then(films => {
       let count = 0;
       films.map(film => {
