@@ -12,7 +12,7 @@ Promise.resolve()
   .catch((err) => { if (NODE_ENV === 'development') console.error(err.stack); });
 
 // ROUTES
-app.get('/films', getFilmRecommendations);
+app.get('/films/:id', getFilmRecommendations);
 
 // ROUTE HANDLER
 function getFilmRecommendations(req, res, next) {
@@ -54,32 +54,34 @@ function getFilmRecommendations(req, res, next) {
     foreignKey: 'genre_id'
   });
 
+  let id = req.params.id;
+
   //FETCH ALL
   //app.get('/films', (req, res, next) => {
-  films.findAll({
+  films.find({
+    where: {
+      id: id
+    },
     include: [
       {
         model: genres,
-        required: true
+        required: false
       }
     ],
-    offset: 1,
+    offset: 0,
     limit: 10
     })
-      .then(films => {
-        const resObj = films.map(film => {
-        return Object.assign(
-          {},
-          {
+      .then(film => {
+        res.json({
+          film: {
             film_id: film.id,
             title: film.title,
             release_date: film.release_date,
             genre: film.genre.name,
-        })
-    });
-      res.json(resObj)
+          }
+        });
   })
-    .catch(next)
+    .catch(next);
 
 
 
