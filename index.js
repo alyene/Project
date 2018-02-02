@@ -56,30 +56,41 @@ function getFilmRecommendations(req, res, next) {
 
   let id = req.params.id;
 
-  //FETCH ALL
-  //app.get('/films', (req, res, next) => {
-  films.find({
+  const findByGenreId = sequelize.dialect.QueryGenerator.selectQuery('films',{
+    attributes: ['genre_id'],
     where: {
-      id: id
-    },
+         id: id
+       }
+    })
+    .slice(0,-1);
+
+  films.findAll({
     include: [
       {
         model: genres,
         required: false
       }
     ],
+    where: {
+      genre_id: {
+             $in: sequelize.literal('(' + findByGenreId + ')'),
+      }
+    },
     offset: 0,
     limit: 10
     })
-      .then(film => {
-        res.json({
-          film: {
+      .then(films => {
+        const resObj = films.map(film => {
+        return Object.assign(
+          {},
+          {
             film_id: film.id,
             title: film.title,
             release_date: film.release_date,
             genre: film.genre.name,
-          }
-        });
+        })
+    });
+      res.json(resObj)
   })
     .catch(next);
 
